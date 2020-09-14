@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace ConsoleGomoku
+namespace ConsoleGomokuV2._0
 {
     class Program
     {
@@ -19,7 +19,7 @@ namespace ConsoleGomoku
         {
 
             string[,] board = new string[15, 15];
-
+            
             for (int i = 0; i < 15; i++)
             {
                 for (int j = 0; j < 15; j++)
@@ -39,15 +39,15 @@ namespace ConsoleGomoku
                 board = Move(board, XorO);
 
                 //Console.ReadLine();
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
                 Console.Clear();
                 CheckWin(board);
                 drawBoard(board);
                 XorO = !XorO;
             } while (final == 0);
+            
 
-
-            switch (final)
+            switch(final)
             {
                 case 1:
                     Console.WriteLine("Победил X");
@@ -63,7 +63,7 @@ namespace ConsoleGomoku
             Console.ReadLine();
         }
 
-        public static void drawBoard(string[,] board)
+        public static void drawBoard(string[,] board) // Вывод игрового поля на экран
         {
             for (int i = 0; i < 15; i++)
             {
@@ -74,8 +74,8 @@ namespace ConsoleGomoku
                 Console.WriteLine();
             }
         }
-
-        public static void CheckWin(string[,] board)
+        
+        public static void CheckWin(string[,] board) // Проверка поля на победу
         {
             for (int i = 0; i < 15; i++) // Проверка всех пятерок по горизонтали
             {
@@ -88,7 +88,7 @@ namespace ConsoleGomoku
                             final = 1;
                         else
                             final = 2;
-                        board[i, j] = board[i, j + 1] = board[i, j + 2] = board[i, j + 3] = board[i, j + 4] = "П";//Обозначить победные камни буквой "П"
+                        board[i, j] = board[i, j + 1] = board[i, j + 2] = board[i, j + 3] = board[i, j + 4] = "П"; // Обозначить победные камни буквой "П"
                         break;
                     }
                 }
@@ -144,76 +144,71 @@ namespace ConsoleGomoku
                 final = 3;
             }
         }
+        
 
-
-        public static string[,] Move(string[,] board, bool XorO)
+        public static string[,] Move(string[,] board, bool XorO) // Логика компьютера. Ход
         {
-
             // Суть алгоритма:
             // Посмотреть для каждой ячейки все возможные пятерки(эта ячейка + 4 соседних) во всех направлениях 
             //(Горизонтали, вертикали, диагонали) и сравнить приоритеты.
-            // Если в пятерке только 1 вид камня(X или O) и "окна", то есть смысл рассматривать пятерку для потенциального хода. 
-            // Если в пятерке и X, и O, то нет возможности выстроить в ней выйгрышную комбинацию(Либо она не опасна).
-            // Приоритет каждой пятерки сравнивается с максимальным. Если приоритет данной пятерки выше, то он становится макс,
-            //а координаты первого окна в этой пятерке заносятся в переменные для дальнейшего хода.
-            // Есть проверка 1 ячейки перед каждой пятеркой. Если она пуста, то увеличивается коэффициент усиления приоритета, 
-            //так как "открытые" комбинации сильнее.  
+            // Если в пятерке только 1 вид камня(X или O) и "окна", то есть смысл рассматривать пятерку
+            //для потенциального хода. 
+            // Если в пятерке и X, и O, то нет возможности выстроить в ней выйгрышную 
+            //комбинацию(Либо она не опасна).
+            // Приоритет каждой пятерки сравнивается с максимальным. Если приоритет данной пятерки выше, 
+            //то он становится макс, а координаты первого окна в этой пятерке заносятся в переменные для 
+            //дальнейшего хода.
+            // Есть проверка 1 ячейки перед каждой пятеркой. Если она пуста, то увеличивается 
+            //коэффициент усиления приоритета, так как "открытые" комбинации сильнее.  
 
             int priority = 0; // Приоритет рассматриваемой пятерки
+            int koef = 1; // Коэфициент усиления приоритета
             int maxPriority = 0; // Максимальный приоритет данного хода
             int iAI = 0, jAI = 0; // Координаты, на которые нужно сделать ход
-            int iAIvacant = 0; //Координаты первого "окна" в пятерке, чтоб его закрыть в случае высшего приоритета пятерки
-                              //(например Х_Х_Х, первая "_" и есть координаты)
-            int jAIvacant = 0; // Вторая координата(Х_Х_Х, вторая "_")
-            int stone = 0; // Камень, количество камней в рассматриваемой пятерке
-            int window = 0; // Окно, количество пустых мест в рассматриваемой пятерке
-            string friend; // Друг, союзный камень
-            string enemy; // Враг, камень соперника
+            int iAIvacant = 0, jAIvacant = 0; // Координаты первого "окна" в пятерке, чтоб его закрыть в 
+                                             //случае высшего приоритета пятерки
+                                            //(например Х_Х_Х, первый "_" и есть коррдинаты первого окна)
+            int stone = 0; // Количество КАМНЕЙ в рассматриваемой пятерке
+            int window = 0; // Количество ОКОН, пустых мест в рассматриваемой пятерке
+            string friend; // Друг, союзный камень для AI, использующего алгоритм
             string currentAI; // Камень в рассматриваемой ячейке: X или O
-            int koef = 1; // Коэфициент усиления приоритета
-
             Random rnd = new Random();
 
             if (XorO == false)
-            {
-                enemy = "X";
                 friend = "O";
-            }
             else
-            {
-                enemy = "O";
                 friend = "X";
-            }
-
-
 
 
             for (int i = 0; i < 15; i++) // ГОРИЗОНТАЛИ
             {
-                for (int j = 0; j < 11; j++) // Смотрит 5 элементов СПРАВА от найденного, проверяет на пустоту 1 левый
+                for (int j = 0; j < 11; j++) // Смотрит 5 элементов СПРАВА от найденного, 
+                                            //проверяет на пустоту 1 левый
                 {
                     if (board[i, j] != "-") // Если клетка не пустая, нужно отсмотреть от нее пятерку
                     {
                         currentAI = board[i, j];
                         stone = window = priority = jAIvacant = 0;
                         koef = 1;
+
                         for (int jFive = j; jFive < j + 5; jFive++) // Рассматриваем пятерку
                         {
-                            if (board[i, jFive] == currentAI) //Подсчет одинаковых камней в пятерке
+                            if (board[i, jFive] == currentAI) // Подсчет одинаковых камней в пятерке
                                 stone++;
-                            if (board[i, jFive] == "-") //Подсчет окон в пятерке
+                            if (board[i, jFive] == "-") // Подсчет "окон" в пятерке
                             {
                                 window++;
                                 if (window == 1)
-                                    jAIvacant = jFive;// Сохранить координату первого "окна", чтобы сделать в него ход при 
-                                                     //максимальном приоритете пятерки
+                                    jAIvacant = jFive; // Сохранить координату первого "окна", чтобы 
+                                                      //сделать в него ход при максимальном приоритете пятерки
                             }
-                            if (window + stone == 5) // Если в пятерке камни только 1го игрока и "окна", то имеет смысл оценить 
-                                                    //приоритет хода в эту пятерку
+                            if (window + stone == 5) // Если в пятерке камни только 1го игрока и "окна", 
+                                                    //то имеет смысл оценить приоритет хода в эту пятерку
                             {
-                                if (j > 0 && board[i, j - 1] == "-") // Если клетка позади пятерки пустая, значимость пятерки 
-                                                            //увеличивается относительно пятерок с таким же количеством камней
+                                if (j > 0 && board[i, j - 1] == "-") // Если клетка позади пятерки пустая, 
+                                //значимость пятерки увеличивается относительно пятерок с таким же количеством камней
                                     koef++;
+
                                 if (stone == 1)
                                     priority = 1 * koef;
                                 if (stone == 2)
@@ -227,7 +222,7 @@ namespace ConsoleGomoku
                                 }
                                 if (stone == 4) // 4 камня требуют наибольшего внимания
                                 {
-                                    priority = 100;
+                                    priority = 100; 
                                     if (currentAI == friend) // Если четверка дружественная, наибольший приоритет(200): победа
                                         priority += 100;
                                 }
@@ -239,8 +234,8 @@ namespace ConsoleGomoku
                                     jAI = jAIvacant;
                                 }
 
-                                if (priority == maxPriority)// Если текущий приоритет равен максимальному, 
-                                    //то наугад решается, сменить максимально приоритетный ход или нет
+                                if (priority == maxPriority) // Если текущий приоритет равен максимальному, то наугад решается, 
+                                    //сменить максимально приоритетный ход или нет
                                 {
                                     if (rnd.Next(0, 2) == 0)
                                     {
@@ -288,7 +283,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority += 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -337,7 +332,7 @@ namespace ConsoleGomoku
                                 if (i > 0 && board[i - 1, j] == "-")
                                     koef++;
                                 if (stone == 1)
-                                    priority = 1;
+                                    priority = 1 * koef;
                                 if (stone == 2)
                                 { priority = 3 * koef; }
                                 if (stone == 3)
@@ -350,7 +345,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority+= 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -394,7 +389,7 @@ namespace ConsoleGomoku
                                 if (i < 15 - 1 && board[i + 1, j] == "-")
                                     koef++;
                                 if (stone == 1)
-                                    priority = 1;
+                                    priority = 1 * koef;
                                 if (stone == 2)
                                 { priority = 3 * koef; }
                                 if (stone == 3)
@@ -407,7 +402,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority += 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -436,7 +431,8 @@ namespace ConsoleGomoku
             for (int i = 0; i < 11; i++) // ДИАГОНАЛЬ \
             {
                 int iFive;
-                for (int j = 0; j < 11; j++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СНИЗУ от найденного, проверяет на пустоту 1 верхний
+                for (int j = 0; j < 11; j++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СНИЗУ от найденного, 
+                                            //проверяет на пустоту 1 верхний
                 {
                     if (board[i, j] != "-") // Если клетка не пустая, нужно отсмотреть от нее пятерку
                     {
@@ -462,7 +458,7 @@ namespace ConsoleGomoku
                                 if (i > 0 && j > 0 && board[i - 1, j - 1] == "-")
                                     koef++;
                                 if (stone == 1)
-                                    priority = 1;
+                                    priority = 1 * koef;
                                 if (stone == 2)
                                     priority = 3 * koef;
                                 if (stone == 3)
@@ -475,7 +471,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority += 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -501,7 +497,8 @@ namespace ConsoleGomoku
             }
             for (int i = 4; i < 15; i++) // диагональ \ от низа к верху
             {
-                for (int j = 4; j < 15; j++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СВЕРХУ от найденного, проверяет на пустоту 1 нижний
+                for (int j = 4; j < 15; j++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СВЕРХУ от найденного, 
+                                            //проверяет на пустоту 1 нижний
                 {
                     if (board[i, j] != "-") // Если клетка не пустая, нужно отсмотреть от нее пятерку
                     {
@@ -527,7 +524,7 @@ namespace ConsoleGomoku
                                 if (i < 14 && j < 14 && board[i + 1, j + 1] == "-")
                                     koef++;
                                 if (stone == 1)
-                                    priority = 1;
+                                    priority = 1 * koef;
                                 if (stone == 2)
                                 { priority = 3 * koef; }
                                 if (stone == 3)
@@ -540,7 +537,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority += 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -568,7 +565,8 @@ namespace ConsoleGomoku
 
             for (int i = 4; i < 15; i++) // ДИАГОНАЛЬ / 
             {
-                for (int j = 0; j < 11; j++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СВЕРХУ от найденного, проверяет на пустоту 1 нижний
+                for (int j = 0; j < 11; j++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СВЕРХУ от найденного, 
+                                            //проверяет на пустоту 1 нижний
                 {
                     if (board[i, j] != "-") // Если клетка не пустая, нужно отсмотреть от нее пятерку
                     {
@@ -594,7 +592,7 @@ namespace ConsoleGomoku
                                 if (i < 14 && j > 0 && board[i + 1, j - 1] == "-")
                                     koef++;
                                 if (stone == 1)
-                                    priority = 1;
+                                    priority = 1 * koef;
                                 if (stone == 2)
                                 { priority = 3 * koef; }
                                 if (stone == 3)
@@ -607,7 +605,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority += 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -631,7 +629,8 @@ namespace ConsoleGomoku
                     }
                 }
             }
-            for (int i = 0; i < 11; i++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СНИЗУ от найденного, проверяет на пустоту 1 верхний
+            for (int i = 0; i < 11; i++) // Смотрит 5 элементов ПО ДИАГОНАЛИ СНИЗУ от найденного, 
+                                        //проверяет на пустоту 1 верхний
             {
                 for (int j = 4; j < 15; j++)
                 {
@@ -659,7 +658,7 @@ namespace ConsoleGomoku
                                 if (j < 14 && i > 0 && board[i - 1, j + 1] == "-")
                                     koef++;
                                 if (stone == 1)
-                                    priority = 1;
+                                    priority = 1 * koef;
                                 if (stone == 2)
                                 { priority = 3 * koef; }
                                 if (stone == 3)
@@ -672,7 +671,7 @@ namespace ConsoleGomoku
                                 {
                                     priority = 100;
                                     if (currentAI == friend)
-                                        priority++;
+                                        priority += 100;
                                 }
 
                                 if (priority > maxPriority)
@@ -696,7 +695,7 @@ namespace ConsoleGomoku
                     }
                 }
 
-            } // алгоритм AI закрывается
+            } // алгоритм AI окончен
 
             if (maxPriority == 0) // если алгоритм не нашел ни одного хода, то выбирается случайная клетка, чтобы дойти до ничьей
             {
